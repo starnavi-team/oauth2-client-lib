@@ -1,0 +1,9 @@
+*.*~
+*.log
+*.pot
+__pycache__/
+*.sqlite
+*.sublime-project
+*.sublime-workspace
+.idea/
+dist/
