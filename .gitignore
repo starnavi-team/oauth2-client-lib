@@ -7,3 +7,4 @@ __pycache__/
 *.sublime-workspace
 .idea/
 dist/
+django_oauth2_client.egg-info/

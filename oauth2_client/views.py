@@ -1,6 +1,7 @@
 import requests
 from django.conf import settings
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
+from django.shortcuts import redirect
 from django.views.generic import View, RedirectView
 
 
@@ -28,7 +29,7 @@ class OAuth2Login(RedirectView):
 
 class OAuth2Logout(View):
     def get(self, request):
-        if token in request.GET:
+        if 'token' in request.GET:
             url = f'{settings.OAUTH2_SERVER}/revoke_token/'
             token = request.GET['token']
             data = {
@@ -37,6 +38,7 @@ class OAuth2Logout(View):
                 'client_secret': settings.OAUTH2_CLIENT_SECRET,
             }
             response = requests.post(url, data=data)
-            return HttpResponse(response.text)
-        else:
-            return HttpResponse('Token is not provided')
+            to = settings.LOGOUT_REDIRECT_URL if settings.LOGOUT_REDIRECT_URL else '/'
+            return redirect(to)
+
+        return HttpResponseBadRequest('Token is not provided')
