@@ -10,8 +10,9 @@ OAUTH2_SERVER = ''        # server address
 OAUTH2_CLIENT_ID = ''     # application's id
 OAUTH2_CLIENT_SECRET = '' # application's secret
 ```
-Add to template:
+New endpoints:
 ```
-<a href="{% url 'oauth2_client:login' %}">Log in</a>
-<a href="{% url 'oauth2_client:logout' %}?token=<token>">Log out</a>
+/oauth2/login/
+/oauth2/logout/?token=<token>
+/oauth2/refresh/?refresh_token=<token>
 ```
