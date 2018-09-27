@@ -1,3 +1,5 @@
+import urllib
+
 import requests
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
@@ -16,15 +18,19 @@ class OAuth2Callback(View):
             'redirect_uri': request.build_absolute_uri(request.path),
         }
         response = requests.post(url, data=data)
-        return JsonResponse(response.json())
+
+        redirect_uri = request.GET.get('state', '/') + '?' + \
+                       urllib.parse.urlencode(response.json())
+        return redirect(redirect_uri)
 
 
 class OAuth2Login(RedirectView):
     def get_redirect_url(self):
         url = f'{settings.OAUTH2_SERVER}/authorize/'
         client_id = settings.OAUTH2_CLIENT_ID
+        redirect_uri = self.request.META.get("HTTP_REFERER", '/').split('?')[0]
 
-        return f'{url}?response_type=code&client_id={client_id}'
+        return f'{url}?response_type=code&client_id={client_id}&state={redirect_uri}'
 
 
 class OAuth2Logout(View):
@@ -38,7 +44,28 @@ class OAuth2Logout(View):
                 'client_secret': settings.OAUTH2_CLIENT_SECRET,
             }
             response = requests.post(url, data=data)
-            to = settings.LOGOUT_REDIRECT_URL if settings.LOGOUT_REDIRECT_URL else '/'
-            return redirect(to)
+
+            redirect_uri = self.request.META.get("HTTP_REFERER", '/').split('?')[0]
+            return redirect(redirect_uri)
 
         return HttpResponseBadRequest('Token is not provided')
+
+
+class OAuth2Refresh(View):
+    def get(self, request):
+        if 'refresh_token' in request.GET:
+            url = f'{settings.OAUTH2_SERVER}/token/'
+            refresh_token = request.GET['refresh_token']
+            data = {
+                'grant_type': 'refresh_token',
+                'refresh_token': refresh_token,
+                'client_id': settings.OAUTH2_CLIENT_ID,
+                'client_secret': settings.OAUTH2_CLIENT_SECRET,
+            }
+            response = requests.post(url, data=data)
+
+            redirect_uri = self.request.META.get("HTTP_REFERER", '/').split('?')[0] + '?' + \
+                           urllib.parse.urlencode(response.json())
+            return redirect(redirect_uri)
+
+        return HttpResponseBadRequest('Refresh token is not provided')
